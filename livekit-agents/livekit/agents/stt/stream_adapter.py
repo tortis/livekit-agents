@@ -73,6 +73,9 @@ class StreamAdapterWrapper(SpeechStream):
                     start_event = SpeechEvent(SpeechEventType.START_OF_SPEECH)
                     self._event_queue.put_nowait(start_event)
                 elif event.type == VADEventType.END_OF_SPEECH:
+                    end_event = SpeechEvent(type=SpeechEventType.END_OF_SPEECH)
+                    self._event_queue.put_nowait(end_event)
+
                     merged_frames = merge_frames(event.frames)
                     t_event = await self._stt.recognize(
                         buffer=merged_frames, *self._args, **self._kwargs
@@ -83,12 +86,6 @@ class StreamAdapterWrapper(SpeechStream):
                         alternatives=[t_event.alternatives[0]],
                     )
                     self._event_queue.put_nowait(final_event)
-
-                    end_event = SpeechEvent(
-                        type=SpeechEventType.END_OF_SPEECH,
-                        alternatives=[t_event.alternatives[0]],
-                    )
-                    self._event_queue.put_nowait(end_event)
         except Exception:
             logging.exception("stt stream adapter failed")
         finally:
